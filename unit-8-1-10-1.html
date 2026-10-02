@@ -699,7 +699,7 @@ checkin: {
 }
 };
 
-var VERSION = "1.0";
+var VERSION = "1.1";
 
 /* ---------- small helpers ---------- */
 function $(s, el){ return (el||document).querySelector(s); }
@@ -884,7 +884,8 @@ function arrowH(y, x1, x2){
     '<path class="a-fa" d="M'+(x2-10)+' '+(y-6)+' L'+x2+' '+y+' L'+(x2-10)+' '+(y+6)+' Z"/>';
 }
 function ext(x1,y1,x2,y2){ return '<line class="a-d" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'"/>'; }
-function txt(x, y, s, extra){ return '<text class="a-t" x="'+x+'" y="'+y+'" text-anchor="middle"'+(extra||"")+'>'+esc(s)+'</text>'; }
+function txt(x, y, s, extra){ extra = extra || ""; /* an anchor passed in extra must win, so do not also write middle */
+  return '<text class="a-t" x="'+x+'" y="'+y+'"'+(/text-anchor=/.test(extra) ? "" : ' text-anchor="middle"')+extra+'>'+esc(s)+'</text>'; }
 
 var TILE_ART = {
   recall: '<circle class="a-i" cx="56" cy="40" r="24"/><path class="a-i" d="M56 26v14l10 6"/><path class="a-a" d="M96 22h44M96 40h32M96 58h40"/>',
@@ -932,7 +933,7 @@ function diodeCircuitArt(c){
     '<rect x="130" y="16" width="44" height="28" style="fill:var(--tint)"/>' + diodeH(152, 30, c.right) +
     txt(152, 64, c.mat === "Ge" ? "germanium" : "silicon", ' style="font-size:12px"') +
     '<rect class="a-f" x="240" y="66" width="20" height="38"/>' + txt(276, 90, "R");
-  return svgWrap("0 0 300 170", s, "Supply of "+c.volts+", a "+(c.mat==="Ge"?"germanium":"silicon")+" diode and a resistor in series");
+  return svgWrap("-26 0 326 170", s, "Supply of "+c.volts+", a "+(c.mat==="Ge"?"germanium":"silicon")+" diode and a resistor in series");
 }
 function transistorArt(c){
   var s = '<path class="a-i" d="M190 20 V56 M190 120 V150 M60 150 H260 M60 20 H260"/>' +
@@ -977,7 +978,7 @@ function waveArt(kind, opt){
   s += '<path class="a-a" style="stroke-width:3" d="'+pts.map(function(p,n){ return (n?"L":"M")+p[0].toFixed(1)+" "+p[1].toFixed(1); }).join(" ")+'"/>';
   s += '<line class="a-i" x1="'+x0+'" y1="'+mid+'" x2="'+(x0+w)+'" y2="'+mid+'" style="stroke-width:1.2"/>';
   if (opt.xlabel) s += txt(x0+w/2, H-2, opt.xlabel, ' style="font-size:12px;fill:var(--muted)"');
-  if (opt.ylabel) s += txt(14, y0+8, opt.ylabel, ' text-anchor="start" style="font-size:12px;fill:var(--muted)"');
+  if (opt.ylabel) s += txt(x0, y0-6, opt.ylabel, ' text-anchor="start" style="font-size:12px;fill:var(--muted)"');
   return svgWrap("0 0 "+W+" "+H, s, "A waveform drawn on a grid");
 }
 
@@ -1348,7 +1349,8 @@ document.addEventListener("keydown", function(e){
   var t = e.target, tag = (t && t.tagName) || "";
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.metaKey || e.ctrlKey || e.altKey) return;
   if (/^[1-9]$/.test(e.key)) {
-    var b = $$(".conf button:not([disabled]), .opt:not([disabled]), .chunk:not([disabled]), [data-ans]:not([disabled])")[Number(e.key)-1];
+    var conf = $$(".conf button:not([disabled])");   /* Sure or Not?: once an answer is picked, the keys rate confidence */
+    var b = (conf.length ? conf : $$(".opt:not([disabled]), .chunk:not([disabled]), [data-ans]:not([disabled])"))[Number(e.key)-1];
     if (b) { e.preventDefault(); b.click(); }
   } else if (e.key === "Enter" && tag !== "BUTTON" && tag !== "A") {
     var n = $("#next"); if (n) { e.preventDefault(); n.click(); }
@@ -1457,6 +1459,8 @@ function showFeedback(ok, rightText, why, nextLabel, onNext, chosenFb){
 }
 function runMCQ(key, items, opts){
   opts = opts || {};
+  /* every question in a round needs its own id: a repeated id would be treated as "Back again" and not scored */
+  var idsSeen = {}; items = items.map(function(it, k){ if (idsSeen[it.id]) it = Object.assign({}, it, {id: it.id + "~" + k}); idsSeen[it.id] = 1; return it; });
   var queue = items.slice(), total = items.length, i = 0, score = 0, bonus = 0, log = [], review = [], started = Date.now(), shownAt = 0;
   var seen = {}, conf = {sr:0, sw:0, gr:0, gw:0}, added = 0, answered = 0;
   function show(){
