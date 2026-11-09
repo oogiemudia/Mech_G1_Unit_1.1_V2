@@ -1493,7 +1493,8 @@ function help(){
     '<p class="small muted" style="margin:-6px 0 12px">Cream uses a softer background and wider spacing, which many people find easier to read.</p>' +
     '<b style="color:var(--head)">Text size</b>' + seg("scale", [[1,"Normal"],[1.15,"Large"],[1.3,"Larger"],[1.45,"Largest"]], P.scale) +
     '<b style="color:var(--head)">Movement</b>' + seg("motion", [["auto","Normal"],["reduce","Reduced"]], P.motion) + '</div>' +
-    '<div style="margin-top:16px"><button class="btn ghost block" id="out">Sign out on this phone</button></div>' +
+    '<div style="margin-top:16px"><a class="btn ghost block" href="./">All unit hubs</a></div>' +
+    '<div style="margin-top:10px"><button class="btn ghost block" id="out">Sign out on this phone</button></div>' +
     '<p class="foot">'+esc(HUB_CONFIG.hubName)+', version '+VERSION+'. This is formative. Nothing here is marked or graded.</p></div>', {tab:"help"});
   $$("[data-pref]").forEach(function(b){ b.onclick = function(){
     var k = b.dataset.pref, v = b.dataset.v; S.prefs[k] = (k === "scale") ? Number(v) : v; Store.set("prefs", S.prefs); applyPrefs(); help();
